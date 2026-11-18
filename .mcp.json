@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "clipper": {
-      "command": "bash",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/run_server.sh"]
+      "command": "${CLIPPER_PYTHON:-python3}",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/run_server.py"]
     }
   }
 }

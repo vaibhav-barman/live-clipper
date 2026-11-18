@@ -40,7 +40,7 @@ if len(sys.argv) == 4:  # dense scan of one span
         print(f"  {t:7.2f} {v:5.1f} {'#'*int(v)}{flag}")
 else:  # score each beat in the keeplist
     print(f"{'beat':24} {'mean':>5} {'max':>5} {'spikes':>6}  verdict")
-    for line in open(sys.argv[2]):
+    for line in open(sys.argv[2], encoding="utf-8"):
         line = line.strip()
         if not line or line.startswith("#"): continue
         s, e, *rest = line.split()

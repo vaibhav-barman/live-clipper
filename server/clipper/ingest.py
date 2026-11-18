@@ -59,7 +59,7 @@ def _parse_live_chat(d):
     if not f:
         return
     msgs = []
-    for line in f.read_text(errors="replace").splitlines():
+    for line in f.read_text(encoding="utf-8", errors="replace").splitlines():
         try:
             o = json.loads(line)
             act = o["replayChatItemAction"]
@@ -72,7 +72,7 @@ def _parse_live_chat(d):
                     msgs.append({"t": ms / 1000, "text": text})
         except (KeyError, json.JSONDecodeError, ValueError):
             continue
-    json.dump(msgs, open(d / "chat.json", "w"))
+    json.dump(msgs, open(d / "chat.json", "w", encoding="utf-8"))
     media.log(f"chat: {len(msgs)} messages")
 
 
@@ -139,7 +139,7 @@ def window_source(job_id, start, end, dst):
     if not chunks:
         raise RuntimeError("no recorded media covers that window yet")
     lst = Path(dst).with_suffix(".txt")
-    lst.write_text("".join(f"file '{c['path']}'\n" for c in chunks))
+    lst.write_text("".join(f"file '{c['path']}'\n" for c in chunks), encoding="utf-8")
     joined = Path(dst).with_suffix(".joined.mp4")
     media.run(["ffmpeg", "-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", lst, "-c", "copy",
                joined])

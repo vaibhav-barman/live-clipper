@@ -155,7 +155,7 @@ def _sfx_plan(mix_lufs, total_s, opts):
     cat_f = paths.SFX_DIR / "catalog.json"
     if not opts.get("sfx", True) or not cat_f.exists():
         return [], ("no SFX catalog at " + str(cat_f) if opts.get("sfx", True) else "SFX off")
-    cat = json.load(open(cat_f))
+    cat = json.load(open(cat_f, encoding="utf-8"))
 
     def pick(words, n):
         cands = [e for e in cat if any(w in Path(e["file"]).name.lower() for w in words)]
@@ -187,7 +187,7 @@ def render_clip(clip_id, layout="auto", top_stamp="", credit=None, game_center=N
         layout = choose_layout(data)
     if layout == "split" and not data.get("facecam"):
         raise RuntimeError("split layout needs a facecam — run detect_facecam or choose 'gameplay'")
-    cut = json.load(open(d / "cut.json"))
+    cut = json.load(open(d / "cut.json", encoding="utf-8"))
     spans, f0 = [], 0
     for p in cut["pieces"]:
         nf = max(1, round(p["dur"] * FPS))
@@ -232,7 +232,7 @@ def render_clip(clip_id, layout="auto", top_stamp="", credit=None, game_center=N
     media.run(["ffmpeg", "-v", "error", "-y", "-i", d / "cut.mp4", "-filter_complex", graph,
                "-map", "[v]", "-c:v", "libx264", "-preset", "veryfast", "-crf", "14", "-r", str(FPS), comp])
     # captions / stamps / credit
-    caps = json.load(open(d / "captions.json")) if (d / "captions.json").exists() else []
+    caps = json.load(open(d / "captions.json", encoding="utf-8")) if (d / "captions.json").exists() else []
     if credit is None:
         who = job.get("streamer") or "the streamer"
         where = job.get("platform") or "stream"
@@ -308,7 +308,7 @@ def review_clip(clip_id):
     for name, (w, h, x, y) in (data.get("regions") or {}).items():
         cmd += ["--region", f"{name}:{w}:{h}:{x}:{y}"]
     p = media.run(cmd, check=False)
-    rep = json.load(open(rv / "report.json"))
+    rep = json.load(open(rv / "report.json", encoding="utf-8"))
     db.set_clip(clip_id, review_verdict=rep["verdict"], review_report=str(rv / "report.md"),
                 status="reviewed")
     return {"verdict": rep["verdict"], "report": str(rv / "report.md"),

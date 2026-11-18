@@ -15,7 +15,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).parent))
 from probe import key, tx
 
-C = json.load(open(sys.argv[1])); P = C["pieces"]
+C = json.load(open(sys.argv[1], encoding="utf-8")); P = C["pieces"]
 w = wave.open(C["audio"]); sr = w.getframerate(); ch = w.getnchannels()
 x = np.frombuffer(w.readframes(w.getnframes()), np.int16)
 if ch > 1: x = x.reshape(-1, ch).mean(1).astype(np.int16)

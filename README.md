@@ -55,18 +55,32 @@ clip into your folder as it's ready:
 
 ```text
 ~/Movies/Clips/
-└── <date>_<channel>/
-    ├── 01_<title>.mp4      the finished 1080×1920 short
-    ├── 01_<title>.jpg      cover
-    └── 01_<title>.txt      captions for each platform
+└── live-clipper/
+    └── <creator>/                         one folder per streamer, every run adds to it
+        ├── <date>_01_<title>.mp4          the finished 1080×1920 short
+        ├── <date>_01_<title>_cover.jpg    cover
+        └── <date>_01_<title>.txt          captions for each platform
 ```
 
-`--out` is remembered. It never posts; that stays in `/publish`.
+Without `--out`, the folder is `~/Movies/live-clipper` on macOS and `~/Videos/live-clipper` on
+Windows and Linux. A custom `--out` always gets a `live-clipper` folder inside it. `--out` is
+remembered. It never posts; that stays in `/publish`.
 
-From Terminal, fully hands-off:
+### Clip and post in one go
+
+```text
+/live-clipper:clip-and-post https://www.youtube.com/live/<video_id> --clips 5
+```
+
+Same autopilot, then **one** question at the end: a checklist of the finished clips. Tick the ones
+you want and they go to your YouTube and Instagram accounts; untick everything and nothing posts.
+Add `--schedule` to use the growth planner's next posting slots instead of posting now.
+
+From a terminal, fully hands-off (clips only, never posts):
 
 ```bash
-scripts/clip <link> --out ~/Movies/Clips
+scripts/clip <link> --out ~/Movies/Clips          # macOS / Linux
+scripts\clip.cmd <link> --out %USERPROFILE%\Videos # Windows (cmd or PowerShell)
 ```
 
 ---
@@ -125,10 +139,10 @@ flowchart LR
 |---|---|
 | [`.claude-plugin/`](.claude-plugin) | `plugin.json` (manifest) and `marketplace.json` (so the repo can be installed as a marketplace) |
 | [`agents/`](agents) | 15 sub-agents, one job each, with a loop check each |
-| [`commands/`](commands) | 12 commands: setup, page setup, VOD, live, stop, status, publish, post-due, creators, takedown, report, feedback |
+| [`commands/`](commands) | 14 commands: setup, page setup, one-link autopilot, clip-and-post, VOD, live, stop, status, publish, post-due, creators, takedown, report, feedback |
 | [`skills/`](skills) | 13 skills: editing rules, the page playbook and the growth loop (`ADAPTED.md` lists sources) |
 | [`server/`](server) | the `clipper` MCP server: 46 tools, a background task runner, the SQLite ledger |
-| [`scripts/`](scripts) | `setup.sh`, `run_server.sh`, `auth_youtube.py` |
+| [`scripts/`](scripts) | `setup.py` and `run_server.py` (cross-platform; `.sh` shims kept), `clip` / `clip.cmd`, `auth_youtube.py` |
 | [`.mcp.json`](.mcp.json) | starts the server when the plugin is enabled |
 
 Your data never lives in the plugin folder. Everything goes under `~/.live-clipper/` (set
@@ -148,12 +162,17 @@ Please open an issue with your logs if something breaks.
 
 ## 📦 Install
 
-**Requirements:** macOS or Linux, **Python 3.10–3.12** (WhisperX doesn't support 3.13 yet), ffmpeg,
-about 5 GB of disk for the speech models.
+**Requirements:** macOS, Windows 10/11 or Linux, **Python 3.10–3.12** (WhisperX doesn't support
+3.13 yet), ffmpeg, about 5 GB of disk for the speech models.
 
 ```bash
 # macOS
 brew install python@3.12 ffmpeg
+```
+
+```powershell
+# Windows (open a NEW terminal afterwards so PATH updates)
+winget install Python.Python.3.12 Gyan.FFmpeg
 ```
 
 ```text
@@ -162,9 +181,11 @@ brew install python@3.12 ffmpeg
 /plugin install live-clipper@live-clipper-marketplace
 
 # 2. install dependencies (venv in ~/.live-clipper/venv)
-/live-clipper:clip-setup          # or: bash /path/to/live-clipper/scripts/setup.sh
+/live-clipper:clip-setup          # or: python3 /path/to/live-clipper/scripts/setup.py
+                                  # Windows: py \path\to\live-clipper\scripts\setup.py
 
-# 3. restart Claude Code so the clipper MCP server starts
+# 3. restart Claude Code so the clipper MCP server starts (on Windows, fully quit it first:
+#    setup sets CLIPPER_PYTHON, which only new processes see)
 ```
 
 To publish, set up accounts once (see [Accounts](#-accounts)). Clipping and reviewing work without them.
@@ -175,11 +196,13 @@ To publish, set up accounts once (see [Accounts](#-accounts)). Clipping and revi
 |---|---|
 | `/live-clipper:clip-page-setup` | page name, handle, niche angle, platforms, timezone, voice, posting rhythm |
 | `/live-clipper:clip-creators [@handle granted]` | who has given permission to be clipped |
+| `/live-clipper:live-clipper <link> [--out DIR]` | one link → finished clips in `live-clipper/<creator>/`, no questions, never posts |
+| `/live-clipper:clip-and-post <link> [--schedule]` | the same, then one checklist: tick clips → posted to YouTube + Instagram |
 | `/live-clipper:clip-vod <url-or-file> --clips 5 --streamer @handle --platform Twitch` | full pipeline on a recorded stream |
 | `/live-clipper:clip-live <url> --clips 10 --minutes 120 [--rush]` | record in 60 s chunks and clip near-live; `--rush` for launch day |
 | `/live-clipper:clip-stop [job]` | stop a live recording |
 | `/live-clipper:clip-status [job]` | jobs, clips, what's waiting for approval |
-| `/live-clipper:publish [job-or-clip]` | watch, approve, then post now / schedule / export a post kit. **The only way anything gets posted** |
+| `/live-clipper:publish [job-or-clip]` | watch, approve, then post now / schedule / export a post kit. **Posting always goes through this approval step** (`clip-and-post` ends in it too) |
 | `/live-clipper:clip-post-due` | post scheduled clips that are due (make it a scheduled task every 15 min) |
 | `/live-clipper:clip-report` | daily report + today's one test |
 | `/live-clipper:clip-feedback [--weekly]` | 12/24/72 h stats → scoreboard.csv → lessons + rubric changes you approve |
@@ -210,8 +233,8 @@ and so you don't work around them.
 
 ### Nothing posts without you
 
-- **3 · Nothing posts without you.** Clips stop at `ready_for_approval`. Only `/publish` can approve,
-   only after you pick the clip in that session, and approval expires after 24 hours. The server
+- **3 · Nothing posts without you.** Clips stop at `ready_for_approval`. Only `/publish` and the checklist at the
+   end of `/clip-and-post` can approve, only after you pick the clip in that session, and approval expires after 24 hours. The server
    refuses to upload anything else. Never add `approve_clip` or `publish_clip` to auto-allowed tools.
 - **12 · Watch every clip before approving it.** The review gate catches a lot, but you are the last check.
 - **14 · Don't post the same clip twice to one account.** The server blocks it; don't get around it by
@@ -273,7 +296,8 @@ page around the clips:
 
 In Google Cloud, enable the YouTube Data API v3 and create an OAuth *Desktop* client. Save it as
 `~/.live-clipper/credentials/youtube_client_secret.json`, then run
-`~/.live-clipper/venv/bin/python scripts/auth_youtube.py main-yt` once per account.
+`~/.live-clipper/venv/bin/python scripts/auth_youtube.py main-yt` once per account
+(Windows: `%USERPROFILE%\.live-clipper\venv\Scripts\python.exe scripts\auth_youtube.py main-yt`).
 
 > [!NOTE]
 > Uploads made by apps that haven't passed Google's audit may be forced private; set
@@ -319,8 +343,11 @@ Without a catalogue, clips render with the stream's audio only.
 
 <br>
 
-Run setup, then restart Claude Code. `bash scripts/run_server.sh` should print a FastMCP banner. If
+Run setup, then restart Claude Code. `python3 scripts/run_server.py` should print a FastMCP banner. If
 it says "not set up", run setup again.
+
+On Windows, check `echo %CLIPPER_PYTHON%` in a new terminal shows the venv's `python.exe`. If it's
+empty, rerun `py scripts\setup.py` and fully quit and reopen Claude Code.
 
 </details>
 

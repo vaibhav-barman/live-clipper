@@ -52,7 +52,7 @@ def ffprobe(path, count=False):
     cmd = ["ffprobe", "-v", "error", "-show_streams", "-show_format", "-of", "json"]
     if count:
         cmd[1:1] = ["-count_frames"]
-    return json.loads(subprocess.run(cmd + [str(path)], capture_output=True, text=True,
+    return json.loads(subprocess.run(cmd + [str(path)], capture_output=True, text=True, encoding="utf-8", errors="replace",
                                      check=True).stdout)
 
 
@@ -146,7 +146,7 @@ def check_cfr(v):
 def check_frames(v, dur, a):
     n = int(v.get("nb_read_frames") or v.get("nb_frames") or 0)
     if a.cut:
-        cut = json.load(open(a.cut))
+        cut = json.load(open(a.cut, encoding="utf-8"))
         total = cut.get("total") or sum(p["dur"] for p in cut["pieces"])
         expect = round(total * a.fps)
         src = "cut.json"
@@ -236,7 +236,7 @@ def check_motion(a, n_expected):
 
 
 def load_captions(path, fps):
-    raw = json.load(open(path))
+    raw = json.load(open(path, encoding="utf-8"))
     caps = []
     for c in raw:
         if "from" in c:
@@ -427,7 +427,7 @@ def check_overlay(a):
 def sections(a, dur):
     if a.sections:
         out = []
-        for line in open(a.sections):
+        for line in open(a.sections, encoding="utf-8"):
             line = line.split("#")[0].strip()
             if line:
                 s, e, *lab = line.split()
@@ -435,7 +435,7 @@ def sections(a, dur):
         return out
     if a.cut:
         t, out = 0.0, []
-        for p in json.load(open(a.cut))["pieces"]:
+        for p in json.load(open(a.cut, encoding="utf-8"))["pieces"]:
             out.append((t, t + p["dur"], str(p.get("beat") or p.get("id", ""))))
             t += p["dur"]
         return out
@@ -536,7 +536,7 @@ def main():
     worst = FAIL if any(r["status"] == FAIL for r in results) else (
         WARN if any(r["status"] == WARN for r in results) else PASS)
     report = {"video": str(a.video), "verdict": worst, "checks": results, "sheets": index}
-    (outdir / "report.json").write_text(json.dumps(report, indent=1, ensure_ascii=False))
+    (outdir / "report.json").write_text(json.dumps(report, indent=1, ensure_ascii=False), encoding="utf-8")
 
     skipped = [r["check"] for r in results if r["status"] == SKIP]
     md = [f"# Review: {a.video.name}", "", f"**Verdict: {worst}**"
@@ -550,7 +550,7 @@ def main():
     for kind, label in (("mid", "mid-beat"), ("post", "+0.35 s after each boundary")):
         md += ["", f"### sheet_{kind}.jpg ({label})", "", "| tile | section | t (s) |", "| --- | --- | --- |"]
         md += [f"| {x['tile']} | {x['section']} | {x['t']} |" for x in index[kind]]
-    (outdir / "report.md").write_text("\n".join(md) + "\n")
+    (outdir / "report.md").write_text("\n".join(md) + "\n", encoding="utf-8")
 
     for r in results:
         print(f"[{r['status']:4}] {r['check']}: {r['summary']}")

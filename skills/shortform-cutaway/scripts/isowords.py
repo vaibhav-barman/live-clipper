@@ -47,5 +47,5 @@ starts = [round(T0 + 3 * i, 2) for i in range(int((T1 - T0) // 3) + 1)]
 with cf.ThreadPoolExecutor(8) as ex:
     res = list(ex.map(words, starts))
 W = sorted((w for r in res for w in r), key=lambda w: w["s"])
-json.dump(W, open(sys.argv[2], "w"), ensure_ascii=False)
+json.dump(W, open(sys.argv[2], "w", encoding="utf-8"), ensure_ascii=False)
 print(f"{len(W)} isolated-window words over {T1 - T0:.0f}s ({len(starts)} windows)", file=sys.stderr)

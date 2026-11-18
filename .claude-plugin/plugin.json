@@ -1,6 +1,6 @@
 {
   "name": "live-clipper",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Software-factory clip pipeline and clip-page manager: turn live streams and VODs into credited, captioned vertical shorts with 15 sub-agents (ingest, hook scouting, envelope-exact cuts, cut audit, facecam geometry, finish, captions, render, review, per-platform copy, approval-gated publishing and scheduling, daily tests and feedback).",
   "author": {
     "name": "Vaibhav Barman",

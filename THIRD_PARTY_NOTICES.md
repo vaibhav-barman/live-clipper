@@ -3,7 +3,7 @@
 ## Adapted editing skills
 
 Several files in `skills/` (and the scripts under `skills/shortform-cutaway/scripts/`,
-`skills/take-geometry/scripts/measure_take.py` and `skills/shortform-finish/scripts/reverb_throw.sh`)
+`skills/take-geometry/scripts/measure_take.py` and `skills/shortform-finish/scripts/reverb_throw.py`)
 are adapted from a short-form video creator's editing skills. `skills/ADAPTED.md` lists exactly
 what was kept and what was changed in each one.
 

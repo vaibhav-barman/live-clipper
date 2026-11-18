@@ -24,7 +24,7 @@ SCRIPTS = {
     "measure_take": SKILLS / "take-geometry/scripts/measure_take.py",
     "review_reel": SKILLS / "reel-review/scripts/review_reel.py",
     "sfx_catalog": SKILLS / "sfx-design/scripts/sfx_catalog.py",
-    "reverb_throw": SKILLS / "shortform-finish/scripts/reverb_throw.sh",
+    "reverb_throw": SKILLS / "shortform-finish/scripts/reverb_throw.py",
 }
 
 

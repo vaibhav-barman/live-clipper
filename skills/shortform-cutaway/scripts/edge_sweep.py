@@ -20,9 +20,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from envtools import env, thr, islands
 
-C = json.load(open(sys.argv[1])); AUD = C["audio"]; P = C["pieces"]
-WX = sorted(json.load(open(sys.argv[2])), key=lambda w: w["s"])
-ISO = sorted(json.load(open(sys.argv[sys.argv.index("--iso") + 1])), key=lambda w: w["s"]) if "--iso" in sys.argv else None
+C = json.load(open(sys.argv[1], encoding="utf-8")); AUD = C["audio"]; P = C["pieces"]
+WX = sorted(json.load(open(sys.argv[2], encoding="utf-8")), key=lambda w: w["s"])
+ISO = sorted(json.load(open(sys.argv[sys.argv.index("--iso") + 1], encoding="utf-8")), key=lambda w: w["s"]) if "--iso" in sys.argv else None
 E, TH = env(AUD), thr(AUD)
 norm = lambda s: "".join(ch for ch in s.lower() if ch.isalnum())
 COMMON = {"very", "the", "a", "and", "is", "that", "i", "it", "this", "so", "of", "to", "you", "are", "in", "all"}

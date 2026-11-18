@@ -5,6 +5,7 @@ import csv
 import json
 import re
 import shutil
+import sys
 import time
 from pathlib import Path
 
@@ -13,6 +14,9 @@ from . import db, media, paths
 PAGE_FILE = paths.HOME / "page.json"
 LEARNING = paths.HOME / "learning.md"
 SCOREBOARD = paths.HOME / "scoreboard.csv"
+
+# macOS keeps videos in ~/Movies; Windows and most Linux desktops use ~/Videos.
+DEFAULT_OUTPUT = "~/Movies/live-clipper" if sys.platform == "darwin" else "~/Videos/live-clipper"
 
 PAGE_DEFAULT = {
     "name": "", "handle": "", "niche": "", "platforms": ["youtube", "instagram"],
@@ -23,7 +27,7 @@ PAGE_DEFAULT = {
     "not_affiliated_with": "",
     "credit_format": "🎥 @{creator}",
     "avoid_creators": [],
-    "output_dir": "~/Movies/live-clipper",
+    "output_dir": DEFAULT_OUTPUT,
 }
 
 PLATFORM_RULES = {
@@ -44,7 +48,7 @@ BANNED_WORDS = ["official", "leak", "leaked", "play early", "free copy", "giveaw
 def get_page():
     page = dict(PAGE_DEFAULT)
     if PAGE_FILE.exists():
-        page.update(json.load(open(PAGE_FILE)))
+        page.update(json.load(open(PAGE_FILE, encoding="utf-8")))
     page["configured"] = PAGE_FILE.exists() and bool(page.get("name"))
     return page
 
@@ -57,7 +61,7 @@ def set_page(fields):
         raise ValueError(f"unknown page fields: {sorted(unknown)}")
     page.update(fields)
     paths.ensure()
-    PAGE_FILE.write_text(json.dumps(page, indent=1, ensure_ascii=False))
+    PAGE_FILE.write_text(json.dumps(page, indent=1, ensure_ascii=False), encoding="utf-8")
     return get_page()
 
 
@@ -251,7 +255,7 @@ def export_scoreboard():
                    "JOIN clips c ON c.id=p.clip_id JOIN jobs j ON j.id=c.job_id "
                    "WHERE p.status IN ('published','takedown_pending','removed') ORDER BY p.posted_at")
     page = get_page()
-    with open(SCOREBOARD, "w", newline="") as f:
+    with open(SCOREBOARD, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=COLS)
         w.writeheader()
         for r in rows:
@@ -331,19 +335,31 @@ def _safe(x):
     return re.sub(r"[^A-Za-z0-9._-]+", "-", x or "").strip("-")[:60] or "clip"
 
 
+def output_root(output_dir=None):
+    """The 'live-clipper' folder clips are delivered into. A custom --out gets a live-clipper
+    sub-folder unless it already is one, so every run lands in the same tidy tree."""
+    out = Path(output_dir or get_page()["output_dir"]).expanduser()
+    return out if out.name.lower() == "live-clipper" else out / "live-clipper"
+
+
 def deliver_clip(clip_id, output_dir=None):
-    """Copy a reviewed clip into the user's folder: <out>/<date>_<streamer>/<nn>_<title>.mp4 plus
-    the cover and a .txt with the per-platform copy and the review verdict. Never posts anything."""
+    """Copy a reviewed clip into the user's folder:
+    <out>/live-clipper/<creator>/<date>_<nn>_<title>.mp4 plus the cover and a .txt with the
+    per-platform copy and the review verdict. Never posts anything."""
     c = db.one("SELECT * FROM clips WHERE id=?", clip_id)
     job = db.one("SELECT * FROM jobs WHERE id=?", c["job_id"])
     data = c.get("data") or {}
     if not data.get("final"):
         raise ValueError("clip has no final render")
-    out = Path(output_dir or get_page()["output_dir"]).expanduser()
-    folder = out / f"{time.strftime('%Y-%m-%d', time.localtime(job['created']))}_{_safe(job.get('streamer') or 'stream')}"
+    creator = _safe((job.get("streamer") or "").lstrip("@")) if job.get("streamer") else "unknown-creator"
+    folder = output_root(output_dir) / creator
     folder.mkdir(parents=True, exist_ok=True)
     n = clip_id.rsplit("-c", 1)[-1]
-    name = f"{n}_{_safe(c.get('title') or data.get('top_stamp') or clip_id)}"
+    date = time.strftime("%Y-%m-%d", time.localtime(job["created"]))
+    base = f"{date}_{n}_{_safe(c.get('title') or data.get('top_stamp') or clip_id)}"
+    name, k = base, 2
+    while (folder / f"{name}.mp4").exists() and data.get("delivered_to") != str(folder / f"{name}.mp4"):
+        name, k = f"{base}-{k}", k + 1           # two jobs, same creator, same day: never overwrite
     shutil.copy(data["final"], folder / f"{name}.mp4")
     if data.get("cover"):
         shutil.copy(data["cover"], folder / f"{name}_cover.jpg")
