@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.DS_Store
+*.log
+# never commit credentials or media
+credentials/
+accounts.json
+*.mp4
+*.mov
+*.wav
+.env

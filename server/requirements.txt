@@ -1,0 +1,9 @@
+fastmcp>=2.12
+numpy>=1.26
+opencv-python-headless>=4.8,<5
+yt-dlp
+streamlink
+requests
+google-api-python-client
+google-auth-oauthlib
+boto3

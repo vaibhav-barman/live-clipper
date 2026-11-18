@@ -1,0 +1,14 @@
+{
+  "name": "live-clipper-marketplace",
+  "description": "Marketplace for live-clipper: a 14-agent Claude Code plugin that turns live streams and VODs into vertical shorts.",
+  "owner": {
+    "name": "Vaibhav Barman"
+  },
+  "plugins": [
+    {
+      "name": "live-clipper",
+      "source": "./",
+      "description": "Turn live streams and VODs into vertical shorts with a 14-agent clip factory."
+    }
+  ]
+}

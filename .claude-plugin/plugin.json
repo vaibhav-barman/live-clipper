@@ -1,0 +1,10 @@
+{
+  "name": "live-clipper",
+  "version": "0.1.0",
+  "description": "Software-factory clip pipeline: turn live streams and VODs into vertical shorts with 14 sub-agents (ingest, hook scouting, envelope-exact cuts, cut audit, facecam geometry, finish, captions, render, review, copy, approval-gated publishing, feedback).",
+  "author": { "name": "Vaibhav Barman", "url": "https://github.com/vaibhav-barman" },
+  "homepage": "https://github.com/vaibhav-barman/live-clipper",
+  "repository": "https://github.com/vaibhav-barman/live-clipper",
+  "license": "MIT",
+  "keywords": ["clipping", "live-stream", "shorts", "reels", "video", "agents", "mcp"]
+}

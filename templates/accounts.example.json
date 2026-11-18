@@ -1,0 +1,4 @@
+[
+  {"name": "main-yt", "platform": "youtube", "privacy": "public"},
+  {"name": "main-ig", "platform": "instagram", "ig_user_id": "YOUR_IG_BUSINESS_USER_ID", "token_env": "IG_TOKEN_MAIN"}
+]
