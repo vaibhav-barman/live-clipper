@@ -16,6 +16,8 @@ removes that creator's personal setup (accounts, brand colours, SSD paths, Remot
 | `caption-align` | `caption-align` | three clocks, derive→force-align→pause audit, run rules, section anchors | `cut.json` map; voice stem; second voices, profanity |
 | `sfx-design` | `sfx-design` | peak scheduling, sound by motion, final-domain volume, measurement trap, residual check | build-your-own catalogue (`sfx_catalog.py`); ffmpeg `amix normalize=0`; lower density |
 | `render-ops` | `render-ops` | frozen frames, audio drift fix, loudness on the encoded file, frame-count check, delete rules | ffmpeg only; Remotion bundle/entry material removed |
+| `page-playbook` | Parker's (@DotComParker) clipping-page prompt | credit ≠ permission, transform, spoilers, never-list, copy rules, takedowns | enforced in code (`check_copy`, permissions, gates) |
+| `growth-loop` | same prompt | 12/24/72 h reads, one test a day, daily/weekly reviews, learning.md | automated reads, scoreboard export |
 | `reel-review` | `reel-review` | script measures / model judges, different model, BLOCKER/FIX/NIT, honest reading | ships `review_reel.py` (the original referenced it but didn't include it) |
 
 Left out entirely: `vlog-edit`, `longform-edit`, `broll-style-edit`, `card-list-edit`, `whiteout-edit`,

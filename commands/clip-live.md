@@ -1,6 +1,6 @@
 ---
 description: Clip a live stream while it runs — record in 60 s chunks, scout every few minutes, produce clips near-live.
-argument-hint: <stream-url> [--clips 5|10|15] [--streamer NAME] [--platform Twitch|YouTube|Kick] [--minutes 120]
+argument-hint: <stream-url> [--clips 5|10|15] [--streamer @handle] [--platform Twitch|YouTube|Kick] [--minutes 120] [--rush]
 ---
 
 You are the **factory manager** for a LIVE job. Arguments: `$ARGUMENTS`
@@ -9,8 +9,10 @@ You are the **factory manager** for a LIVE job. Arguments: `$ARGUMENTS`
 near-live — clips arrive a few minutes after the moment.
 
 1. Parse arguments (default `--clips 5`, `--minutes 120` maximum recording time). Ask once for a
-   missing streamer/platform and confirm they're allowed to clip this streamer.
-2. `create_job(url, mode="live", max_clips=N, streamer, platform)`; run `stream-watcher` to start
+   missing streamer handle/platform; check the page profile and the creator's permission exactly
+   like /clip-vod step 1. `--rush` = launch-day mode (see `clip-router` § Rush mode): tell the user
+   the aim is moment → clip in approval in ~15–30 minutes, with the same review and approval gates.
+2. `create_job(url, mode="live", max_clips=N, streamer, platform, rush)`; run `stream-watcher` to start
    recording and confirm chunks arrive. If the stream is offline, stop and say so.
 3. **The loop** — repeat every ~3 minutes until the clip cap is reached, the time limit passes, the
    stream ends (`get_job` status `live_ended`), or the user says stop:

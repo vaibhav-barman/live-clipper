@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from fastmcp import FastMCP  # noqa: E402
 
-from clipper import analysis, db, media, paths, production, publish, tasks  # noqa: E402
+from clipper import analysis, db, growth, media, paths, production, publish, tasks  # noqa: E402
 
 mcp = FastMCP(
     "clipper",
@@ -66,18 +66,25 @@ def stop_task(task_id: str) -> dict:
 
 @mcp.tool
 def create_job(source: str, mode: str = "vod", max_clips: int = 5, min_score: float = 7.0,
-               streamer: str = "", platform: str = "", keywords: Optional[list[str]] = None) -> dict:
+               streamer: str = "", platform: str = "", keywords: Optional[list[str]] = None,
+               rush: bool = False) -> dict:
     """Start a job. source = VOD/stream URL or a local video path. mode 'vod' or 'live'.
-    max_clips is a CAP, not a quota. streamer/platform feed the credit strip."""
+    max_clips is a CAP, not a quota. streamer = the creator's handle (credit strip + permission
+    check). rush = launch-day mode (speed first: no SFX, first strong moments, same review gate)."""
     if mode not in ("vod", "live"):
         raise ValueError("mode must be vod or live")
+    perm = growth.assert_creator_ok(streamer)
     jid = time.strftime("%Y%m%d") + "-" + uuid.uuid4().hex[:6]
     d = paths.job_dir(jid)
     db.exec_("INSERT INTO jobs(id, source, mode, status, max_clips, min_score, keywords, streamer, "
              "platform, dir, meta, created) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", jid, source, mode,
              "created", max_clips, min_score, json.dumps(keywords or []), streamer, platform,
-             str(d), "{}", time.time())
-    return {"job_id": jid, "dir": str(d)}
+             str(d), json.dumps({"rush": rush}), time.time())
+    out = {"job_id": jid, "dir": str(d), "creator_permission": perm}
+    if perm in ("unknown", "asked"):
+        out["warning"] = (f"permission from @{streamer.lstrip('@')} is '{perm}'. Credit is not permission — "
+                          "clip only creators who allow it (record it with upsert_creator).")
+    return out
 
 
 @mcp.tool
@@ -133,7 +140,7 @@ def update_clip(clip_id: str, fields: dict) -> dict:
     bad = set(f) - UPDATABLE
     if bad:
         raise ValueError(f"not updatable: {sorted(bad)}")
-    if f.get("status") in ("approved", "published"):
+    if f.get("status") in ("approved", "published", "scheduled", "taken_down"):
         raise ValueError("approval happens only through approve_clip after a human says yes")
     if f.get("status") and f["status"] not in db.CLIP_STATUSES:
         raise ValueError(f"status must be one of {db.CLIP_STATUSES}")
@@ -310,6 +317,32 @@ def approve_clip(clip_id: str, approved_by: str) -> dict:
 
 
 @mcp.tool
+def schedule_post(clip_id: str, platform: str, account: str, at_iso: str) -> dict:
+    """Queue an APPROVED clip for a local time, e.g. '2026-11-19T18:30' (page timezone) or with an
+    offset. run_due_posts publishes it when due. Approval is checked now, not at post time."""
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    dt = datetime.fromisoformat(at_iso)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=ZoneInfo(growth.get_page()["timezone"]))
+    return publish.schedule(clip_id, platform, account, dt.timestamp())
+
+
+@mcp.tool
+def run_due_posts() -> dict:
+    """Publish every scheduled post whose time has come (background tasks). Safe to call often —
+    e.g. from a scheduled task every 15 minutes."""
+    started = []
+    for p in publish.due_posts():
+        db.exec_("UPDATE posts SET status='posting' WHERE id=? AND status='scheduled'", p["id"])
+        tid = tasks.start("publish", {"clip_id": p["clip_id"], "platform": p["platform"],
+                                      "account": p["account"], "scheduled_post_id": p["id"]},
+                          clip_id=p["clip_id"])
+        started.append({"post_id": p["id"], "clip_id": p["clip_id"], "task_id": tid})
+    return {"started": started}
+
+
+@mcp.tool
 def publish_clip(clip_id: str, platform: str, account: str) -> dict:
     """Upload an APPROVED clip to youtube or instagram on the named account. Refuses unapproved or
     stale approvals and double posts. Background → task_id."""
@@ -317,6 +350,98 @@ def publish_clip(clip_id: str, platform: str, account: str) -> dict:
     publish._check_gate(c)
     return {"task_id": tasks.start("publish", {"clip_id": clip_id, "platform": platform,
                                                "account": account}, clip_id=clip_id)}
+
+
+# ------------------------------------------------------------------ The page (identity, creators, copy)
+
+@mcp.tool
+def get_page() -> dict:
+    """The page profile: name, handle, niche angle, platforms, timezone, voice, posts per day,
+    approval rules, credit format, creators to avoid. configured=false → run /clip-page-setup."""
+    return growth.get_page()
+
+
+@mcp.tool
+def set_page(fields: dict) -> dict:
+    """Update page profile fields (only from /clip-page-setup or when the user asks)."""
+    return growth.set_page(fields)
+
+
+@mcp.tool
+def upsert_creator(handle: str, platform: str = "", permission: str = "unknown", notes: str = "") -> dict:
+    """Record a creator and whether they allow clipping: unknown | asked | granted | denied | blocked.
+    Jobs and posts for denied/blocked creators are refused."""
+    return growth.upsert_creator(handle, platform, permission, notes)
+
+
+@mcp.tool
+def list_creators(permission: Optional[str] = None) -> list:
+    """The creator watchlist with permission status."""
+    q = "SELECT * FROM creators" + (" WHERE permission=?" if permission else "") + " ORDER BY handle"
+    return db.many(q, *([permission] if permission else []))
+
+
+@mcp.tool
+def record_takedown(clip_id: Optional[str] = None, creator: Optional[str] = None, reason: str = "") -> dict:
+    """Same-day takedown: cancels scheduled posts, marks clips taken_down, blocks the creator, logs
+    it, and returns the live URLs the user must delete by hand today."""
+    return growth.takedown(clip_id, creator, reason)
+
+
+@mcp.tool
+def confirm_takedown(clip_id: str) -> dict:
+    """Mark a takedown done after the user deleted the posts."""
+    return growth.confirm_takedown(clip_id)
+
+
+@mcp.tool
+def check_copy(clip_id: str) -> dict:
+    """Check the clip's per-platform copy (data.copy) against the playbook: hashtag counts (X 0,
+    Instagram 3–5), one emoji max, credit line, no 'official'/'leak' wording, SPOILER label,
+    length limits. approve_clip refuses copy that hasn't passed."""
+    return growth.check_copy(clip_id)
+
+
+@mcp.tool
+def set_cover(clip_id: str, t: float) -> dict:
+    """Pick the cover/thumbnail frame at t seconds of final.mp4 (never a spoiler frame)."""
+    return growth.set_cover(clip_id, t)
+
+
+@mcp.tool
+def export_post_kit(clip_id: str) -> dict:
+    """For approved clips: a folder with the MP4, cover and one text file per platform — for manual
+    upload or Buffer (TikTok, X, Threads have no uploader here)."""
+    return growth.export_post_kit(clip_id)
+
+
+@mcp.tool
+def daily_summary(hours: int = 24) -> dict:
+    """What posted (with views), the top post, what's waiting for approval or scheduled, clips
+    that need a human, open takedowns."""
+    return growth.daily_summary(hours)
+
+
+@mcp.tool
+def export_scoreboard() -> dict:
+    """Write ~/.live-clipper/scoreboard.csv (post_id, date, time, platform, pillar, format, hook,
+    length, credit, views at 12/24/72 h, likes, shares, comments, saves, test_name, notes).
+    Missing numbers stay blank."""
+    return growth.export_scoreboard()
+
+
+@mcp.tool
+def get_learning() -> dict:
+    """learning.md — Wins, Losses, Current Rules, Weekly reviews. Scouts and copywriters read the
+    Current Rules before deciding."""
+    return growth.get_learning()
+
+
+@mcp.tool
+def add_learning(section: str, text: str) -> dict:
+    """Add a lesson to learning.md. section: Wins | Losses | Current Rules | Weekly reviews.
+    Write rules as rules ("3-step HOW TO beats 5-step"), each backed by data."""
+    return growth.add_learning(section, text)
 
 
 # ------------------------------------------------------------------ Graph 4 · Feedback

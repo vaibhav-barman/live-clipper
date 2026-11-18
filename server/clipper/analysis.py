@@ -204,7 +204,9 @@ def save_scores(job_id, scores):
         db.exec_("INSERT INTO clips(id, job_id, candidate_id, status, score, reason, start, end, "
                  "tease, dir, data, created, updated) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                  clip_id, job_id, cid, "scored", score, reason, st, en, int(bool(s.get("tease"))),
-                 str(d), "{}", time.time(), time.time())
+                 str(d), json.dumps({"spoiler": bool(s.get("spoiler")),
+                                     "pillar": s.get("pillar", "gameplay clip"),
+                                     "parts": s.get("parts")}), time.time(), time.time())
         db.exec_("UPDATE candidates SET status='accepted', score=?, reason=? WHERE id=?",
                  score, reason, cid)
         accepted.append({"id": clip_id, "start": st, "end": en, "score": score})

@@ -3,7 +3,8 @@
 <h1 align="center">live-clipper</h1>
 
 <p align="center"><b>Paste a stream link. Get vertical shorts that are cut, captioned and reviewed, ready to post.</b><br>
-A Claude Code plugin built as a software factory: 14 sub-agents, 11 skills, one MCP server.</p>
+A Claude Code plugin built as a software factory: 15 sub-agents, 13 skills, one MCP server —
+plus the page playbook to run a credited, trusted clip page.</p>
 
 <p align="center">
 <img src="https://img.shields.io/badge/Claude%20Code-plugin-orange" alt="Claude Code plugin">
@@ -29,7 +30,7 @@ design. Single-agent **loops** (do → check → fix) are chained into **graphs*
 Distribution, Feedback), and the graphs run together as a **factory** that shares one SQLite ledger.
 
 Agents decide; deterministic tools do the work. The `clipper` MCP server handles the media (ffmpeg,
-yt-dlp, streamlink, Demucs, WhisperX, OpenCV) and keeps the ledger. The 14 sub-agents handle the
+yt-dlp, streamlink, Demucs, WhisperX, OpenCV) and keeps the ledger. The 15 sub-agents handle the
 judgement calls: which moment, where to cut, what the stamp says, whether a clip passes review.
 
 ```
@@ -39,7 +40,8 @@ judgement calls: which moment, where to cut, what the stamp says, whether a clip
 ├─ Graph 2 · Production    hook-scout → clip-cutter ⇄ cut-auditor → layout-geometer
 │                          → vertical-editor → captioner → renderer ⇄ quality-critic
 ├─ Graph 3 · Distribution  copywriter → (you approve in /publish) → publisher
-└─ Graph 4 · Feedback      feedback-analyst → rubric weights (you approve)
+└─ Graph 4 · Feedback      growth-planner (one test a day, daily report)
+                           feedback-analyst (12/24/72 h scoreboard → learning.md, rubric)
 ```
 
 **What makes the clips good:** cuts land on the voice waveform, not on transcript timestamps, so no
@@ -61,10 +63,10 @@ recording, YouTube/Instagram uploads. Please open an issue with your logs if som
 | folder | contents |
 |---|---|
 | `.claude-plugin/` | `plugin.json` (manifest) and `marketplace.json` (so the repo can be installed as a marketplace) |
-| `agents/` | 14 sub-agents, one job each, with a loop check each |
-| `commands/` | `/clip-setup`, `/clip-vod`, `/clip-live`, `/clip-stop`, `/clip-status`, `/publish`, `/clip-feedback` |
-| `skills/` | 11 skills: the rules every agent follows (`ADAPTED.md` lists what each one keeps from its source) |
-| `server/` | the `clipper` MCP server: 31 tools, a background task runner, the SQLite ledger |
+| `agents/` | 15 sub-agents, one job each, with a loop check each |
+| `commands/` | 12 commands: setup, page setup, VOD, live, stop, status, publish, post-due, creators, takedown, report, feedback |
+| `skills/` | 13 skills: editing rules, the page playbook and the growth loop (`ADAPTED.md` lists sources) |
+| `server/` | the `clipper` MCP server: 46 tools, a background task runner, the SQLite ledger |
 | `scripts/` | `setup.sh`, `run_server.sh`, `auth_youtube.py` |
 | `.mcp.json` | starts the server when the plugin is enabled |
 
@@ -97,12 +99,17 @@ To publish, set up accounts once (see "Accounts" below). Clipping and reviewing 
 
 | command | what it does |
 |---|---|
-| `/live-clipper:clip-vod <url-or-file> --clips 5 --streamer NAME --platform Twitch` | full pipeline on a recorded stream |
-| `/live-clipper:clip-live <url> --clips 10 --minutes 120 …` | record in 60 s chunks and clip near-live |
+| `/live-clipper:clip-page-setup` | page name, handle, niche angle, platforms, timezone, voice, posting rhythm |
+| `/live-clipper:clip-creators [@handle granted]` | who has given permission to be clipped |
+| `/live-clipper:clip-vod <url-or-file> --clips 5 --streamer @handle --platform Twitch` | full pipeline on a recorded stream |
+| `/live-clipper:clip-live <url> --clips 10 --minutes 120 [--rush]` | record in 60 s chunks and clip near-live; `--rush` for launch day |
 | `/live-clipper:clip-stop [job]` | stop a live recording |
 | `/live-clipper:clip-status [job]` | jobs, clips, what's waiting for approval |
-| `/live-clipper:publish [job-or-clip]` | watch, approve and post. **The only way anything gets posted** |
-| `/live-clipper:clip-feedback` | stats → proposed rubric changes → you decide |
+| `/live-clipper:publish [job-or-clip]` | watch, approve, then post now / schedule / export a post kit. **The only way anything gets posted** |
+| `/live-clipper:clip-post-due` | post scheduled clips that are due (make it a scheduled task every 15 min) |
+| `/live-clipper:clip-report` | daily report + today's one test |
+| `/live-clipper:clip-feedback [--weekly]` | 12/24/72 h stats → scoreboard.csv → lessons + rubric changes you approve |
+| `/live-clipper:clip-takedown <clip or @creator>` | same-day takedown: cancel, block, list posts to delete |
 
 Each clip ends up in `~/.live-clipper/jobs/<job>/clips/<clip>/` as `final.mp4`, with
 `review/report.md` and two contact sheets next to it, plus every intermediate (`cut.json`,
@@ -131,11 +138,39 @@ and so you don't work around them.
    stream, never made up.
 7. **`--clips N` is a cap, not a quota.** A dull stream gives fewer clips. Lowering `min_score` to
    force more clips makes the channel worse.
-8. **Watch every clip before approving it.** The review gate catches a lot, but you are the last check.
-9. **Keep credentials out of the plugin.** Tokens live in `~/.live-clipper/credentials/` (mode 700)
+8. **Credit is not permission.** Record who allowed you (`/clip-creators`). Denied or blocked
+   creators are refused by the server. Takedown requests are handled the same day (`/clip-takedown`).
+9. **Transform every clip.** Hook stamp, tight trim, burned-in captions and your framing on every
+   clip — Instagram buries accounts that mostly repost without material changes, and a credit or
+   watermark alone doesn't count.
+10. **No leaks, piracy, early-play footage or spoilers in hooks.** Spoiler clips are labelled.
+11. **Before monetising:** YouTube's reused-content policy applies even with the creator's
+    permission, and game publishers have their own footage policies (Rockstar's covers
+    non-commercial use). Read them first.
+12. **Watch every clip before approving it.** The review gate catches a lot, but you are the last check.
+13. **Keep credentials out of the plugin.** Tokens live in `~/.live-clipper/credentials/` (mode 700)
    and in environment variables. Never commit them.
-10. **Don't post the same clip twice to one account.** The server blocks it; don't get around it by
+14. **Don't post the same clip twice to one account.** The server blocks it; don't get around it by
     re-rendering.
+
+## The page side (v0.2)
+
+Inspired by Parker's (@DotComParker) faceless clipping-page playbook, the plugin also runs the
+page around the clips:
+
+- **Page profile** (`/clip-page-setup`): niche angle, voice, platforms and rhythm feed the scout,
+  the copywriter and the planner.
+- **Per-platform copy**, enforced by `check_copy`: X has no hashtags, Instagram 3–5, one emoji max,
+  `🎥 @creator` credit on every post, no "official"/"leak" wording, SPOILER labels, no opening line
+  repeated within 7 days. Approval is refused until the copy passes.
+- **Creator permissions and takedowns:** a watchlist with permission status, refusals for
+  denied/blocked creators, and same-day takedowns.
+- **Scheduling and post kits:** schedule approved clips; YouTube and Instagram post automatically,
+  and TikTok, X, Threads or Buffer get a ready folder (MP4, cover, a text file per platform).
+- **Learning loop:** 12/24/72 h reads, `scoreboard.csv`, one test per day, `learning.md` with Wins,
+  Losses, Current Rules and Weekly reviews.
+- **Rush mode** for launch days: speed first, same review and approval gates, never leaked or
+  pre-unlock footage.
 
 ## Accounts
 
@@ -194,7 +229,8 @@ Without a catalogue, clips render with the stream's audio only.
 
 ## License and credit
 
-MIT — see [LICENSE](LICENSE). Several skills are adapted from another creator's editing skills;
-see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and `skills/ADAPTED.md`.
+MIT — see [LICENSE](LICENSE). Several skills are adapted from another creator's editing skills,
+and the page playbook and growth loop are inspired by Parker's (@DotComParker) clipping-page
+prompt; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and `skills/ADAPTED.md`.
 
 If live-clipper saves you editing time, a ⭐ helps other people find it.

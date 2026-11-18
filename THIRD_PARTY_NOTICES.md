@@ -13,6 +13,15 @@ what was kept and what was changed in each one.
 > author's permission) before publishing. The MIT licence in `LICENSE` covers only the code
 > written for this plugin.
 
+## Page playbook inspiration
+
+`skills/page-playbook` and `skills/growth-loop` (and the page features in `server/clipper/growth.py`)
+are inspired by the "Faceless GTA 6 Clipping Page: Full Setup Prompt" by Parker
+(@DotComParker on X, shared publicly Nov 17, 2026:
+https://x.com/DotComParker/status/2122708338039250992), as transcribed by AI Automation Society.
+The rules were rewritten for this plugin; no text is reproduced verbatim beyond short rule names.
+All credit for the original playbook to him.
+
 ## Runtime dependencies
 
 Installed by `scripts/setup.sh`; not included in this repository. Each is under its own licence:

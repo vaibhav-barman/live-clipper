@@ -14,6 +14,23 @@ stage, hard rules that apply in every format, and nothing ships without a review
 the source is **someone else's live stream**, not the creator's own take, so honesty and credit rules
 are added and the creator-specific formats are gone.
 
+## Step 0 — the page and the creator (before any job)
+
+- `get_page()` — if `configured` is false, suggest `/clip-page-setup` (the clips still work; the
+  copy gets better with a page voice, niche and platforms).
+- The creator's permission (`list_creators`): `granted` → go; `unknown`/`asked` → tell the user
+  that credit is not permission and offer to record it once they've asked; `denied`/`blocked` →
+  the server refuses the job. Never route around it.
+- Load `page-playbook` for anything that touches copy, covers, credit or takedowns, and
+  `growth-loop` for reports, tests and reviews.
+
+## Rush mode (launch day / big drops) — `create_job(..., rush=true)`
+
+Speed first, honesty unchanged. In rush mode: the scout takes the first strong non-story moments,
+windows stay short (7–20 s), the editor turns SFX off and keeps the default finish, and clips go to
+approval as each one passes — **the review gate and the approval gate stay exactly the same**. Aim:
+moment → clip in approval within ~15–30 minutes. Never "be first" with leaked or pre-unlock footage.
+
 ## Step 1 — pick the layout, per clip
 
 Decide from the footage, not from taste. `take-geometry` measures; `stream-layouts` builds.
@@ -64,7 +81,8 @@ paths). An agent never relies on what another agent said in chat.
    layer allowed to enlarge, and only up to 2.25× with lanczos (`stream-layouts`).
 7. **Text inside the safe zone** — y220–1470, 35 px sides, ~100 px clear on the right for the action
    rail. Imagery may cross; text may not.
-8. **Credit every clip.** Streamer name + platform on screen in the close and in the post caption.
+8. **Credit every clip.** Streamer name + platform on screen in the close, and `🎥 @creator` in every
+   caption. Credit is not permission — see `page-playbook`.
 9. **Real numbers only** — viewer counts, donations, scores, ranks. Read off the footage or the
    platform, never invented or rounded up.
 10. **Respect the source's rules.** Only clip streamers who allow it, follow the platform's reuse
@@ -86,7 +104,7 @@ Ship these unasked:
 
 - the **render**, 1080×1920, CFR, loudnorm'd to −14 LUFS **measured on the encoded file**
 - the **review report** (`report.md` + contact sheets) from `reel-review`
-- the **post copy**: title, caption with streamer credit, hashtags, chosen thumbnail frame
+- the **post copy** per platform (`data.copy`), passing `check_copy`, plus a cover (`set_cover`)
 - the ledger row updated to `ready_for_approval`
 
 ## Working in a shared workspace
@@ -116,6 +134,7 @@ clip-cutter ──► cut-auditor ──fail (≤2)──► clip-cutter
                                                                                  │ no BLOCKER
                                                                                  ▼
                                                                     ready_for_approval → copywriter
+                                                                    (copy per platform → check_copy → cover)
 ```
 
 - Track attempts on the clip (`update_clip(..., {"attempts": n})`). After 2 failed rounds at any

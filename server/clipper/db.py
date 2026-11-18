@@ -28,14 +28,22 @@ CREATE TABLE IF NOT EXISTS posts(
   id INTEGER PRIMARY KEY AUTOINCREMENT, clip_id TEXT, platform TEXT, account TEXT,
   remote_id TEXT, url TEXT, status TEXT, posted_at REAL, stats TEXT, stats_at REAL);
 CREATE TABLE IF NOT EXISTS rubric(part TEXT PRIMARY KEY, weight REAL);
+CREATE TABLE IF NOT EXISTS creators(
+  handle TEXT PRIMARY KEY, platform TEXT, permission TEXT, notes TEXT, updated REAL);
+CREATE TABLE IF NOT EXISTS takedowns(
+  id INTEGER PRIMARY KEY AUTOINCREMENT, clip_id TEXT, creator TEXT, reason TEXT,
+  urls TEXT, created REAL, resolved REAL);
 """
+
+MIGRATIONS = ["ALTER TABLE posts ADD COLUMN scheduled_at REAL",
+              "ALTER TABLE posts ADD COLUMN error TEXT"]
 
 RUBRIC_DEFAULT = {"hook": 1.0, "payoff": 1.0, "self_contained": 1.0, "reaction": 1.0,
                   "shareability": 1.0}
 
 CLIP_STATUSES = ["scored", "preparing", "prepared", "cut", "audited", "geometry", "rendered",
-                 "reviewed", "ready_for_approval", "approved", "published", "rejected",
-                 "needs_human", "failed"]
+                 "reviewed", "ready_for_approval", "approved", "scheduled", "published", "rejected",
+                 "needs_human", "failed", "taken_down"]
 
 
 @contextmanager
@@ -54,6 +62,11 @@ def conn():
 def init():
     with conn() as c:
         c.executescript(SCHEMA)
+        for m in MIGRATIONS:
+            try:
+                c.execute(m)
+            except sqlite3.OperationalError:
+                pass                                   # column already there
         for k, v in RUBRIC_DEFAULT.items():
             c.execute("INSERT OR IGNORE INTO rubric(part, weight) VALUES (?, ?)", (k, v))
 

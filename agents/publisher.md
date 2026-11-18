@@ -10,8 +10,9 @@ model: haiku
 ## Steps
 1. `get_clip(clip_id)`: status must be `approved`. If not, STOP and report — never work around the
    gate, never call `approve_clip` yourself.
-2. For each (platform, account) pair you were given: `publish_clip(clip_id, platform, account)` →
-   poll to done (Instagram processing can take several minutes).
+2. For each (platform, account, when) you were given: `when == "now"` → `publish_clip(...)` and poll
+   to done (Instagram can take minutes); a time → `schedule_post(clip_id, platform, account, at_iso)`.
+   TikTok / X / Threads → `export_post_kit(clip_id)` and give the user the folder.
 3. Report each URL, or the exact error (missing token, S3 bucket, quota). Don't retry a failed
    upload more than once — a duplicate post is worse than a delay.
 

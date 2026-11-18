@@ -27,12 +27,28 @@ description: "How hook-scout scores candidate stream moments 0–10 for short-fo
 
 Keep only **≥ 7**. Below that, log it as `rejected` with the reason so the Feedback graph can learn.
 
+## Before scoring
+
+- `get_page()` → the page's **niche angle**. Moments on-angle score as normal; off-angle moments
+  need a strong reason in the line.
+- `get_learning()` → apply the **Current Rules** (they come from this page's own data).
+- `get_job` → the streamer; if their permission is `unknown`, still score, but say so.
+- **Rush mode** (`job.meta.rush`): first strong moments win; prefer non-story moments (driving,
+  map, graphics, NPCs, funny); keep windows short.
+
 ## The window
 
-- **15–60 s.** Shorter only if the whole moment is genuinely complete in less.
+- **7–30 s by default**, up to 60 s when the moment genuinely needs the build-up.
 - **Start ≤ 2 s before the hook line**, not at the setup three minutes earlier.
 - **End on the payoff's release** (the laugh dying, the sentence ending), never mid-reaction.
 - **One idea per clip.** Two peaks 40 s apart are two clips if each stands alone.
+
+## Flags to set on every accepted window
+
+- `spoiler: true` for story beats (launch week especially). The copy must then say SPOILER and the
+  hook/stamp/cover must not reveal it.
+- `pillar`: `gameplay clip` (default), `funny moment`, `tip`, `reaction`, `news` — feeds the
+  scoreboard so the weekly review can compare pillars.
 
 ## Overlap rule
 
@@ -51,3 +67,4 @@ the stream didn't make. Mark the clip `tease: true` so the cutter builds it.
 - moments that are mostly someone else's copyrighted video/music playing on stream
 - private information on screen (addresses, DMs, phone numbers) — or flag for a blur
 - harassment of a person, or anything the streamer asked chat not to clip
+- leaks, pirated/early-access footage, exploits, nudity frames (`page-playbook` § Never)

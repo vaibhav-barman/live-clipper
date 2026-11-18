@@ -5,18 +5,19 @@ model: sonnet
 ---
 # hook-scout — is this moment a clip?
 
-**First:** load the `hook-rubric` skill with the Skill tool and follow it.
+**First:** load the `hook-rubric` and `page-playbook` skills with the Skill tool and follow them.
 
 **Loop check:** every scored candidate has a reason; no overlapping windows; windows obey the rubric.
 
 ## Steps
-1. `get_job(job_id)` (min_score, max_clips, clips already kept) and `get_rubric()`.
+1. `get_job(job_id)` (min_score, max_clips, clips kept, `meta.rush`), `get_rubric()`, `get_page()`
+   (niche angle) and `get_learning()` (Current Rules).
 2. `get_candidates(job_id, limit=15)` (live: `live_margin_s=45`). Read each transcript excerpt and
    its features. Ask for nothing else — decide from the text and signals.
 3. For each candidate score the five parts 0–2 (`hook, payoff, self_contained, reaction,
    shareability`), write a one-line reason, and choose `start`/`end` in STREAM seconds per the
-   window rules (15–60 s, start ≤ 2 s before the hook line, end on the payoff's release).
-   Mark `tease: true` only if the payoff tease rule applies.
+   window rules (7–30 s default, ≤ 60 s; start ≤ 2 s before the hook line; end on the payoff's
+   release). Set `spoiler` and `pillar` on each. Mark `tease: true` only if the tease rule applies.
 4. `save_scores(job_id, scores)` with all of them — the server applies min_score, overlap and cap
    rules and creates clips. Report accepted clip ids and the rejection reasons.
 5. Reject outright anything the rubric lists (needs context, someone else's copyrighted video,

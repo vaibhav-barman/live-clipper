@@ -15,7 +15,8 @@ KINDS = {
     "assemble_cut": lambda a: production.assemble_cut(a["clip_id"]),
     "render_clip": lambda a: render.render_clip(a["clip_id"], **a.get("options", {})),
     "review_clip": lambda a: render.review_clip(a["clip_id"]),
-    "publish": lambda a: publish.publish(a["clip_id"], a["platform"], a["account"]),
+    "publish": lambda a: publish.publish(a["clip_id"], a["platform"], a["account"],
+                                         a.get("scheduled_post_id")),
 }
 
 

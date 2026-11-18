@@ -13,9 +13,10 @@ text in the safe zone, stamp is a solid stamp ≤ 5 words, credit strip present.
 ## Steps
 1. `get_clip(clip_id)`: layout, geometry, transcript of the cut (`words.json` + `cut.json`).
 2. Write the hook stamp: ≤ 5 words, what the viewer is about to see, never the payoff itself, never
-   a claim the stream doesn't support.
+   a claim the stream doesn't support, never a spoiler when `data.spoiler`. If the clip carries a
+   `test_name`/`test_arm` about the stamp or layout, follow that arm.
 3. Choose: `punch` (default true; false for a single continuous piece), `hook_zoom` (default true),
-   `sfx` (true only if `plugin_info.sfx_dir` has a catalog.json), `caption_y` only if geometry
+   `sfx` (true only if `plugin_info.sfx_dir` has a catalog.json, and false in rush mode), `caption_y` only if geometry
    shows hands/mic in the default band.
 4. Save the plan: `update_clip(clip_id, {"data": {"finish": {"top_stamp": …, "punch": …,
    "hook_zoom": …, "sfx": …, "caption_y": …}}})`. The renderer reads it. Don't render yourself.

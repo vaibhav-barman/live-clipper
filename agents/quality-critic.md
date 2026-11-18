@@ -17,6 +17,9 @@ model: opus
    right rail; face framed with headroom; gameplay crop on the action and not mush; no empty card
    in a section's first second; hard cuts (no ghosting); credit strip present; nothing that changes
    what the streamer said; no private info.
+   **Transform check (`page-playbook` §3):** hook stamp in the first second, captions burned in,
+   tight trim — a clip that's a plain re-upload is a BLOCKER. **Spoiler check:** if
+   `data.spoiler`, the stamp and the first second must not reveal it (BLOCKER).
 4. Write findings as BLOCKER / FIX / NIT with tile/section, what's wrong, rule broken, owning
    stage (cutter, geometer, editor, captioner, renderer). Say explicitly if you find nothing.
 5. Every script FAIL is a BLOCKER unless the skill's "reading honestly" section says otherwise —
