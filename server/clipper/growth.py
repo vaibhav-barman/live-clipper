@@ -23,6 +23,7 @@ PAGE_DEFAULT = {
     "not_affiliated_with": "",
     "credit_format": "🎥 @{creator}",
     "avoid_creators": [],
+    "output_dir": "~/Movies/live-clipper",
 }
 
 PLATFORM_RULES = {
@@ -322,3 +323,34 @@ def daily_summary(hours=24):
         "failed_posts": db.many("SELECT clip_id, platform, account, error FROM posts WHERE status='failed'"),
         "open_takedowns": db.many("SELECT clip_id, creator, urls FROM takedowns WHERE resolved IS NULL"),
     }
+
+
+# ------------------------------------------------------------------ delivery to the user's folder
+
+def _safe(x):
+    return re.sub(r"[^A-Za-z0-9._-]+", "-", x or "").strip("-")[:60] or "clip"
+
+
+def deliver_clip(clip_id, output_dir=None):
+    """Copy a reviewed clip into the user's folder: <out>/<date>_<streamer>/<nn>_<title>.mp4 plus
+    the cover and a .txt with the per-platform copy and the review verdict. Never posts anything."""
+    c = db.one("SELECT * FROM clips WHERE id=?", clip_id)
+    job = db.one("SELECT * FROM jobs WHERE id=?", c["job_id"])
+    data = c.get("data") or {}
+    if not data.get("final"):
+        raise ValueError("clip has no final render")
+    out = Path(output_dir or get_page()["output_dir"]).expanduser()
+    folder = out / f"{time.strftime('%Y-%m-%d', time.localtime(job['created']))}_{_safe(job.get('streamer') or 'stream')}"
+    folder.mkdir(parents=True, exist_ok=True)
+    n = clip_id.rsplit("-c", 1)[-1]
+    name = f"{n}_{_safe(c.get('title') or data.get('top_stamp') or clip_id)}"
+    shutil.copy(data["final"], folder / f"{name}.mp4")
+    if data.get("cover"):
+        shutil.copy(data["cover"], folder / f"{name}_cover.jpg")
+    lines = [f"clip: {clip_id}", f"score: {c.get('score')}  layout: {c.get('layout')}  review: {c.get('review_verdict')}",
+             f"source: {job['source']}  credit: @{(job.get('streamer') or '').lstrip('@')}", ""]
+    for plat, entry in (data.get("copy") or {}).items():
+        lines += [f"== {plat} ==", *[str(v) for v in entry.values()], ""]
+    (folder / f"{name}.txt").write_text("\n".join(lines), encoding="utf-8")
+    db.merge_clip_data(clip_id, delivered_to=str(folder / f"{name}.mp4"))
+    return {"file": str(folder / f"{name}.mp4"), "folder": str(folder)}

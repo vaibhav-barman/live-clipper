@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Hands-off from Terminal:  clip <link> [--clips 5] [--out ~/folder]
+# Runs Claude Code headless with the live-clipper autopilot. Clips land in your output folder.
+set -euo pipefail
+[ $# -ge 1 ] || { echo "usage: clip <link> [--clips N] [--out DIR] [--minutes M] [--rush]"; exit 1; }
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+exec claude -p "/live-clipper:live-clipper $*" \
+  --plugin-dir "$ROOT" \
+  --permission-mode acceptEdits \
+  --allowedTools "Bash Read Write Edit Glob Grep Skill Agent TodoWrite mcp__plugin_live-clipper_clipper mcp__clipper"

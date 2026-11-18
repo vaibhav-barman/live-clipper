@@ -416,6 +416,38 @@ def export_post_kit(clip_id: str) -> dict:
 
 
 @mcp.tool
+def probe_source(url: str) -> dict:
+    """Look at a link before clipping: live or VOD, channel name, platform, title, duration.
+    Used by the one-link /live-clipper command so it never has to ask."""
+    import subprocess
+    p = Path(url).expanduser()
+    if p.exists():
+        return {"mode": "vod", "streamer": "", "platform": "local file", "title": p.stem, "local": True}
+    cmd = ([sys.executable, "-m", "yt_dlp"] if media.have("yt_dlp") else ["yt-dlp"]) + \
+        ["--dump-single-json", "--no-warnings", "--skip-download", url]
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+        info = json.loads(r.stdout)
+        live = bool(info.get("is_live")) or info.get("live_status") == "is_live"
+        return {"mode": "live" if live else "vod", "streamer": info.get("uploader_id") or info.get("channel") or info.get("uploader") or "",
+                "channel": info.get("channel") or info.get("uploader"), "platform": info.get("extractor_key", ""),
+                "title": info.get("title"), "duration_s": info.get("duration"), "live_status": info.get("live_status")}
+    except Exception as e:                      # noqa: BLE001 — fall back to the URL shape
+        u = url.lower()
+        plat = "YouTube" if "youtu" in u else "Twitch" if "twitch" in u else "Kick" if "kick.com" in u else ""
+        live = "/live/" in u or ("twitch.tv/" in u and "/videos/" not in u) or ("kick.com/" in u and "/videos/" not in u)
+        return {"mode": "live" if live else "vod", "streamer": "", "platform": plat, "title": None,
+                "guessed": True, "error": str(e)[-200:]}
+
+
+@mcp.tool
+def deliver_clip(clip_id: str, output_dir: Optional[str] = None) -> dict:
+    """Copy a reviewed clip (mp4 + cover + copy .txt) into the user's output folder
+    (page.output_dir, default ~/Movies/live-clipper). Never posts."""
+    return growth.deliver_clip(clip_id, output_dir)
+
+
+@mcp.tool
 def daily_summary(hours: int = 24) -> dict:
     """What posted (with views), the top post, what's waiting for approval or scheduled, clips
     that need a human, open takedowns."""

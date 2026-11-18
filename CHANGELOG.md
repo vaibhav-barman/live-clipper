@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.1 — 2026-11-18
+- One-link autopilot: `/live-clipper:live-clipper <link> [--out DIR]` detects live/VOD, asks nothing, delivers clips to your folder (`deliver_clip`, `probe_source`, `page.output_dir`), and `scripts/clip` for headless Terminal runs.
+
 ## 0.2.0 — 2026-11-18
 - Page side, inspired by Parker's (@DotComParker) clipping-page playbook: page profile, creator
   permissions, same-day takedowns, per-platform copy enforced by `check_copy`, covers, scheduling

@@ -23,6 +23,17 @@ plus the page playbook to run a credited, trusted clip page.</p>
 /live-clipper:clip-vod https://www.twitch.tv/videos/... --clips 5 --streamer NAME --platform Twitch
 ```
 
+## One link, fully automatic
+
+```
+/live-clipper:live-clipper https://www.youtube.com/live/qSyo5d-dVzA --out ~/Movies/Clips
+```
+It works out whether the link is live or a VOD, clips it with no questions, and drops each finished
+clip into your folder as it's ready (`<date>_<channel>/01_<title>.mp4` + cover + a .txt with the
+captions for each platform). `--out` is remembered. It never posts — that stays in `/publish`.
+
+From Terminal, fully hands-off: `scripts/clip <link> --out ~/Movies/Clips`
+
 ## How it works
 
 The plugin turns live streams and VODs into vertical shorts (1080×1920) using a **software-factory**
