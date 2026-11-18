@@ -1,5 +1,5 @@
 ---
-description: Review clips waiting for approval, approve the ones you want, and post now, schedule, or export a post kit. The ONLY way anything gets posted.
+description: Review clips waiting for approval, approve the ones you want, and post now, schedule, or export a post kit. One of the two ways anything gets posted (the other is /clip-and-post, which ends in this same approval step).
 argument-hint: [job_id or clip_id]
 ---
 

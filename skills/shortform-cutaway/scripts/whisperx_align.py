@@ -22,5 +22,5 @@ ma, meta = whisperx.load_align_model(language_code=lang, device=dev)
 al = whisperx.align(res["segments"], ma, meta, audio, dev, return_char_alignments=False)
 words = [{"s": round(w["start"], 3), "e": round(w["end"], 3), "w": w["word"]}
          for s in al["segments"] for w in s.get("words", []) if "start" in w and "end" in w]
-json.dump(words, open(sys.argv[2], "w"), ensure_ascii=False)
+json.dump(words, open(sys.argv[2], "w", encoding="utf-8"), ensure_ascii=False)
 print(f"{len(words)} aligned words", file=sys.stderr)

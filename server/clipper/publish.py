@@ -24,7 +24,7 @@ GRAPH = "https://graph.facebook.com/v21.0"
 def accounts():
     if not paths.ACCOUNTS.exists():
         return []
-    return json.load(open(paths.ACCOUNTS))
+    return json.load(open(paths.ACCOUNTS, encoding="utf-8"))
 
 
 def account(name):
@@ -142,7 +142,7 @@ def _yt_creds(acc):
     creds = Credentials.from_authorized_user_file(str(tok))
     if creds.expired and creds.refresh_token:
         creds.refresh(Request())
-        tok.write_text(creds.to_json())
+        tok.write_text(creds.to_json(), encoding="utf-8")
     return creds
 
 

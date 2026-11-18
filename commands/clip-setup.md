@@ -4,13 +4,15 @@ description: One-time setup for live-clipper — install dependencies, check too
 
 Set up the live-clipper plugin on this machine.
 
-1. Find the plugin folder: it is the folder containing `scripts/setup.sh` for the live-clipper
-   plugin (look under `~/.claude/plugins/` if you don't know it). Run
-   `bash <plugin>/scripts/setup.sh` with the Bash tool and a long timeout (it downloads torch).
-   If the user said "lite", pass `--lite`.
-2. Show the tool check it prints. For anything `False`, give the one-line fix (brew/apt/pip).
-3. Tell the user to restart Claude Code (so the `clipper` MCP server starts), then:
-   - Posting accounts: edit `~/.live-clipper/accounts.json`; YouTube needs
+1. Find the plugin folder: it is the folder containing `scripts/setup.py` for the live-clipper
+   plugin (look under `~/.claude/plugins/` if you don't know it). Run it with the Bash tool and a
+   long timeout (it downloads torch): macOS/Linux `python3 <plugin>/scripts/setup.py`, Windows
+   `py <plugin>/scripts/setup.py` (falls back to `python`). If the user said "lite", pass `--lite`.
+2. Show the tool check it prints. For anything `False`, give the one-line fix for their OS
+   (macOS brew, Linux apt, Windows winget — e.g. `winget install Gyan.FFmpeg`, then a new terminal).
+3. Tell the user to restart Claude Code (so the `clipper` MCP server starts; on Windows fully quit
+   it first so it picks up `CLIPPER_PYTHON`), then:
+   - Posting accounts: edit `~/.live-clipper/accounts.json` (Windows: `%USERPROFILE%\.live-clipper\accounts.json`); YouTube needs
      `credentials/youtube_client_secret.json` and `scripts/auth_youtube.py <account>`; Instagram
      needs a Business/Creator account, its user id, a token in the env var named in accounts.json,
      and `CLIPPER_S3_BUCKET` (plus AWS credentials) for the public video URL.

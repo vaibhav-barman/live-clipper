@@ -20,6 +20,6 @@ first and follow its rules; this command only removes the questions, never the q
 5. **Deliver as you go:** the moment a clip reaches `ready_for_approval` and has copy + cover, call
    `deliver_clip(clip_id)` and post a one-line note to the user (`✓ 02_He-did-NOT-see-that.mp4`).
    Clips in `needs_human` are NOT delivered; list them with the reason at the end.
-6. **Never ask, never post, never approve.** Posting stays in /live-clipper:publish.
+6. **Never ask, never post, never approve.** Posting stays in /live-clipper:publish (or use /live-clipper:clip-and-post to clip and post in one run).
 7. **End with a short report:** folder path, each delivered file with score and duration, skipped
    clips and why, and the permission note if it applies.

@@ -311,7 +311,7 @@ def list_accounts() -> list:
 
 @mcp.tool
 def approve_clip(clip_id: str, approved_by: str) -> dict:
-    """Mark a clip approved. ONLY call this from /publish after the human explicitly said yes to
+    """Mark a clip approved. ONLY call this from /publish or /clip-and-post after the human explicitly said yes to
     this clip in this session. Approval expires after 24 h."""
     return publish.approve(clip_id, approved_by)
 
@@ -426,7 +426,7 @@ def probe_source(url: str) -> dict:
     cmd = ([sys.executable, "-m", "yt_dlp"] if media.have("yt_dlp") else ["yt-dlp"]) + \
         ["--dump-single-json", "--no-warnings", "--skip-download", url]
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+        r = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60)
         info = json.loads(r.stdout)
         live = bool(info.get("is_live")) or info.get("live_status") == "is_live"
         return {"mode": "live" if live else "vod", "streamer": info.get("uploader_id") or info.get("channel") or info.get("uploader") or "",
@@ -443,7 +443,8 @@ def probe_source(url: str) -> dict:
 @mcp.tool
 def deliver_clip(clip_id: str, output_dir: Optional[str] = None) -> dict:
     """Copy a reviewed clip (mp4 + cover + copy .txt) into the user's output folder
-    (page.output_dir, default ~/Movies/live-clipper). Never posts."""
+    (<page.output_dir>/live-clipper/<creator>/; default ~/Movies on macOS, ~/Videos on
+    Windows/Linux). Never posts."""
     return growth.deliver_clip(clip_id, output_dir)
 
 

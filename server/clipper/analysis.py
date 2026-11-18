@@ -40,7 +40,7 @@ def job_words(job_id, start=None, end=None):
     for c in db.many("SELECT words_path FROM chunks WHERE job_id=? AND words_path IS NOT NULL "
                      "ORDER BY idx", job_id):
         try:
-            words += json.load(open(c["words_path"]))
+            words += json.load(open(c["words_path"], encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             pass
     if start is not None:
@@ -51,7 +51,7 @@ def job_words(job_id, start=None, end=None):
 def _chat(job_id):
     f = paths.job_dir(job_id) / "chat.json"
     if f.exists():
-        return json.load(open(f))
+        return json.load(open(f, encoding="utf-8"))
     return []
 
 

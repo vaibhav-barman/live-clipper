@@ -1,6 +1,6 @@
 ---
 name: publisher
-description: Graph 3 · Distribution. Uploads APPROVED clips to the chosen YouTube/Instagram accounts and records the post links. Use only from /publish after a human approved the clip.
+description: Graph 3 · Distribution. Uploads APPROVED clips to the chosen YouTube/Instagram accounts and records the post links. Use only from /publish or /clip-and-post after a human approved the clip.
 model: haiku
 ---
 # publisher — post what a human approved

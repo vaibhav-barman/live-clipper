@@ -20,7 +20,7 @@ def log(*a):
 
 def run(cmd, check=True, cwd=None):
     log("$", " ".join(str(c) for c in cmd)[:600])
-    p = subprocess.run([str(c) for c in cmd], capture_output=True, text=True, cwd=cwd)
+    p = subprocess.run([str(c) for c in cmd], capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=cwd)
     if check and p.returncode != 0:
         raise RuntimeError(f"{Path(str(cmd[0])).name} failed ({p.returncode}): {p.stderr[-1500:]}")
     return p
@@ -143,7 +143,7 @@ def transcribe(wav, out_json, accurate=True, offset=0.0, model="small"):
     if accurate and have("whisperx"):
         tmp = Path(out_json).with_suffix(".wx.json")
         run([sys.executable, paths.SCRIPTS["whisperx_align"], wav, tmp])
-        words = json.load(open(tmp))
+        words = json.load(open(tmp, encoding="utf-8"))
     elif have("faster_whisper"):
         from faster_whisper import WhisperModel
         m = WhisperModel(model if not accurate else "medium", device="cpu", compute_type="int8")
@@ -155,7 +155,7 @@ def transcribe(wav, out_json, accurate=True, offset=0.0, model="small"):
     for w in words:
         w["s"] = round(w["s"] + offset, 3)
         w["e"] = round(w["e"] + offset, 3)
-    json.dump(words, open(out_json, "w"), ensure_ascii=False)
+    json.dump(words, open(out_json, "w", encoding="utf-8"), ensure_ascii=False)
     return words
 
 

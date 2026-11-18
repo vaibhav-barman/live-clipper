@@ -21,7 +21,7 @@ SR = 48000
 def channels(path):
     out = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries",
                           "stream=channels", "-of", "csv=p=0", str(path)],
-                         capture_output=True, text=True).stdout.strip()
+                         capture_output=True, text=True, encoding="utf-8", errors="replace").stdout.strip()
     return int(out or 1)
 
 

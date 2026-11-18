@@ -43,7 +43,7 @@ def probe(src):
     out = subprocess.run(
         ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
          "stream=width,height,duration,side_data_list", "-of", "json", src],
-        capture_output=True, text=True).stdout
+        capture_output=True, text=True, encoding="utf-8", errors="replace").stdout
     st = json.loads(out)["streams"][0]
     rot = 0
     for sd in st.get("side_data_list", []) or []:
@@ -132,7 +132,7 @@ def main():
     samples = []
     if a.beats:
         fr = [float(x) for x in a.fracs.split(",")]
-        for line in open(a.beats):
+        for line in open(a.beats, encoding="utf-8"):
             line = line.strip()
             if not line or line.startswith("#"):
                 continue

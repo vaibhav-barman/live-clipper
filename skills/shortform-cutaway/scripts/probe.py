@@ -16,7 +16,7 @@ def key():
     if os.environ.get("OPENAI_API_KEY"): return os.environ["OPENAI_API_KEY"]
     for f in (".env.local", ".env"):
         if Path(f).exists():
-            for l in open(f):
+            for l in open(f, encoding="utf-8"):
                 if l.startswith("OPENAI_API_KEY="): return l.split("=", 1)[1].strip().strip('"')
     sys.exit("set OPENAI_API_KEY")
 

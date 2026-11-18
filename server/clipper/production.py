@@ -42,7 +42,7 @@ def assemble_cut(clip_id):
     cut_voice16k.wav sliced by SAMPLE index with the flagged micro-fades, sections.txt."""
     c = db.one("SELECT * FROM clips WHERE id=?", clip_id)
     d = Path(c["dir"])
-    cut = json.load(open(d / "cut.json"))
+    cut = json.load(open(d / "cut.json", encoding="utf-8"))
     pieces = cut["pieces"]
     if not pieces:
         raise RuntimeError("cut.json has no pieces")
@@ -85,7 +85,7 @@ def assemble_cut(clip_id):
     for f0, nf, p in spans:
         lines.append(f"{t / FPS:.3f} {(t + nf) / FPS:.3f} {p.get('beat') or p.get('id', '')}")
         t += nf
-    (d / "sections.txt").write_text("\n".join(lines) + "\n")
+    (d / "sections.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
     db.merge_clip_data(clip_id, cut=str(d / "cut.mp4"), cut_mix=str(d / "cut_mix.wav"),
                        cut_voice=str(d / "cut_voice16k.wav"), sections=str(d / "sections.txt"),
                        total_frames=total_frames)
@@ -223,8 +223,8 @@ def make_captions(clip_id, max_words=3):
     Writes captions.json ([{text, from, to}], frames, `to` exclusive)."""
     c = db.one("SELECT * FROM clips WHERE id=?", clip_id)
     d = Path(c["dir"])
-    cut = json.load(open(d / "cut.json"))
-    words = json.load(open(d / "words.json"))
+    cut = json.load(open(d / "cut.json", encoding="utf-8"))
+    words = json.load(open(d / "words.json", encoding="utf-8"))
     spans = [(p["a"], round(p["dur"] * FPS) / FPS) for p in cut["pieces"]]
     total = sum(s[1] for s in spans)
     mapped = []
@@ -291,6 +291,6 @@ def make_captions(clip_id, max_words=3):
         f1 = min(f1, round(total * FPS))
         if f1 > f0:
             out.append({"text": cap["text"], "from": f0, "to": f1})
-    json.dump(out, open(d / "captions.json", "w"), indent=1, ensure_ascii=False)
+    json.dump(out, open(d / "captions.json", "w", encoding="utf-8"), indent=1, ensure_ascii=False)
     db.merge_clip_data(clip_id, captions=str(d / "captions.json"))
     return {"captions": str(d / "captions.json"), "runs": len(out)}

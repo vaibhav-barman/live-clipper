@@ -30,7 +30,7 @@ FPS = float(sys.argv[5]) if len(sys.argv) > 5 else 30.0
 KEEP = 0.16
 UMS = {"uh", "um", "umm", "uhh", "hmm", "mm", "err", "eh"}
 E, TH = env(AUD), thr(AUD)
-W = sorted(({"s": w["s"], "e": w["e"], "w": w["w"]} for w in json.load(open(WX))), key=lambda w: w["s"])
+W = sorted(({"s": w["s"], "e": w["e"], "w": w["w"]} for w in json.load(open(WX, encoding="utf-8"))), key=lambda w: w["s"])
 warn = []
 
 
@@ -42,7 +42,7 @@ def silent_run(a, b):
 
 
 beats = []
-for ln in open(BEATS):
+for ln in open(BEATS, encoding="utf-8"):
     ln = ln.strip()
     if ln and not ln.startswith("#"):
         a, b, *r = ln.split(); beats.append((float(a), float(b), " ".join(r)))
